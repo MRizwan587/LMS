@@ -96,6 +96,17 @@ const OtpPage = () => {
       background-color: #2a2a4e;
     }
   }
+  .button-link {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+  }
+  .button-link:hover {
+    text-decoration: underline;
+  }
 `}</style>
 <div>
     <div className="container">
@@ -121,7 +132,7 @@ const OtpPage = () => {
           Verify OTP
         </button>
       </form>
-      <p>Didn't receive OTP? <a href="#" onClick={handleResendOtp}>Resend OTP</a></p>
+      <p>Didn't receive OTP? <button className="button-link" onClick={handleResendOtp}>Resend OTP</button></p>
     </div>
     </div>
     </>

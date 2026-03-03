@@ -22,7 +22,6 @@ export const sendEmail = async (user, otp) => {
 
     try {
         await transporter.verify();
-        console.log('SMTP connection verified – Gmail ready!');
     } catch (verifyErr) {
         console.error('SMTP verify failed:', verifyErr);
     }
@@ -30,10 +29,10 @@ export const sendEmail = async (user, otp) => {
     const mailOptions = {
         from: `"Library System" <${process.env.EMAIL_USER}>`,  
         to: user.email,
-        subject: 'OTP for your library account',
-        text: `Your OTP for your library account is ${otp}. Please use this OTP to login to your library account`,
+        subject: 'OTP for your library account verification',
         html: `<p>Welcome <strong>${user.name || 'User'}</strong>,</p>
-               <p>Your OTP for your library account is ${otp}. Please use this OTP to login to your library account</p>`,
+        <p style="width: 20%; color: #fff;  font-size: 16px; font-weight: 600; border: 1px solid #000; padding: 10px; border-radius: 5px; text-align: center; background-color: #000;">${otp}</p>
+               <p>Here is Your OTP for your library account verification. Please use this OTP to verify your library account</p>`,
     };
 
     try {

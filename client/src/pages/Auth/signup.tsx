@@ -34,9 +34,9 @@ export default function Signup() {
       };
     
       const roles = [
-        { value: "student", label: "Student", icon: "🎓" },
-        { value: "librarian", label: "Librarian", icon: "📖" },
-        { value: "author", label: "Author", icon: "✍️" },
+        { value: "student", label: "Student"},
+        { value: "librarian", label: "Librarian"},
+        { value: "author", label: "Author"},
       ];
     
       const showRoll = form.role === "student";
@@ -302,13 +302,13 @@ export default function Signup() {
             {/* Name */}
             <div className="field-group">
               <label className="field-label">Full Name</label>
-              <input type="text" name="name" className="field-input" placeholder="John Doe" value={form.name} onChange={handleChange} required />
+              <input type="text" name="name" className="field-input" placeholder="Enter your full name" value={form.name} onChange={handleChange} required />
             </div>
 
             {/* Email */}
             <div className="field-group">
               <label className="field-label">Email Address</label>
-              <input type="email" name="email" className="field-input" placeholder="you@example.com" value={form.email} onChange={handleChange} required />
+              <input type="email" name="email" className="field-input" placeholder="Enter your email address" value={form.email} onChange={handleChange} required />
             </div>
 
             {/* Password */}
@@ -347,7 +347,7 @@ export default function Signup() {
               <div className="roll-inner">
                 <div className="field-group" style={{ marginBottom: 0 }}>
                   <label className="field-label">Roll Number</label>
-                  <input type="text" className="field-input" placeholder="e.g. CS-2021-001" name="rollNumber" value={form.rollNumber} onChange={handleChange} required={showRoll} />
+                  <input type="text" className="field-input" placeholder="Enter your roll number" name="rollNumber" value={form.rollNumber} onChange={handleChange} required={showRoll} />
                 </div>
               </div>
             </div>

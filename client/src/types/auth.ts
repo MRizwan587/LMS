@@ -9,6 +9,8 @@ export interface LoginData {
     password: string;
     role?: 'student' | 'librarian' | 'author';
     rollNumber?: string;
+    librarianId?: string;
+    authorId?: string;
   }
   
   export interface AuthResponse {

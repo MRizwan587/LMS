@@ -1,12 +1,10 @@
 import { logout } from "../../services/authService";
 import type { User as UserType } from "../../types/auth";
-import { useNavigate } from "react-router-dom";
+import { HasRole } from '../../components/auth/HasRole.tsx';
 export default function Dashboard() {
-    const navigate = useNavigate();
     const user = JSON.parse(localStorage.getItem('user') || '{}') as UserType;
     const HandleLogout = () => {
         logout();
-        navigate('/login');
     };
     return (
         <div className="container">
@@ -23,6 +21,17 @@ export default function Dashboard() {
             `}</style>
             <h1 className="title">Welcome {user.name}</h1>
             <p className="subtitle">You are logged in as {user.role}</p>
+
+            <HasRole roles={['librarian', 'author']}>
+                <div className="rounded-lg bg-blue-50 border border-blue-200 px-4 py-3 text-blue-800">
+                    You are a librarian or author — you can manage books and reset passwords.
+                </div>
+            </HasRole>
+            <HasRole roles={['student']}>
+                <div className="rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-green-800">
+                    You are a student — you can browse and issue books.
+                </div>
+            </HasRole>
             <button className="button" onClick={() => HandleLogout()}>Logout</button>
         </div>
     );

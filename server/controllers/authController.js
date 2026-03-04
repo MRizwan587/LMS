@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import { sendEmail } from '../utils/email.js';
 
 export const signup = async (req, res) => {
-  const { name, email, password, role, rollNumber } = req.body;
+  const { name, email, password, role, rollNumber, librarianId, authorId } = req.body;
 
   if (!name || !email || !password || !role) {
     return res.status(400).json({ message: 'All fields are required' });
@@ -12,6 +12,14 @@ export const signup = async (req, res) => {
 
   if (role === 'student' && !rollNumber) {
     return res.status(400).json({ message: 'Roll number is required for students' });
+  }
+
+  if (role === 'librarian' && !librarianId) {
+    return res.status(400).json({ message: 'Librarian ID is required for librarians' });
+  }
+
+  if (role === 'author' && !authorId) {
+    return res.status(400).json({ message: 'Author ID is required for authors' });
   }
 
   try {

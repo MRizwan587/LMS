@@ -1,6 +1,7 @@
 // src/services/authService.ts
 import axios, { AxiosError, type AxiosResponse as AxiosResponse } from 'axios';
 import type { LoginData as LoginDataType, SignupData as SignupDataType, AuthResponse as AuthResponseType, User as UserType } from '../types/auth';
+import { useNavigate } from 'react-router-dom';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -11,6 +12,7 @@ const api = axios.create({
   },
   withCredentials: false,
 });
+
 
 export const login = async (data: LoginDataType): Promise<AuthResponseType> => {
   try {
@@ -39,8 +41,10 @@ export const signup = async (data: SignupDataType): Promise<AuthResponseType> =>
 };
 
 export const logout = () => {
+  const navigate = useNavigate();
   localStorage.removeItem('token');
   localStorage.removeItem('user');
+  navigate('/login');
 };
 
 export const verifyOtp = async (email: string, otp: string): Promise<AuthResponseType> => {

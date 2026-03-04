@@ -1,11 +1,16 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Auth/login';
 import Signup from './pages/Auth/signup';
-import Dashboard from './pages/dashboard/dashboard';
 import OtpPage from './pages/Auth/otp';
 import { Toaster } from 'react-hot-toast';
 import ResetPassword from './pages/Auth/Resetpassword';
 import NewPassword from './pages/Auth/Newpassword';
+import { RequireAuth } from './components/auth/HasRole.tsx';
+import { DashboardLayout } from './components/layout/DashboardLayout';
+import DashboardHome from './pages/dashboard/DashboardHome';
+import BooksPage from './pages/dashboard/BooksPage';
+import MyIssuesPage from './pages/dashboard/MyIssuesPage';
+import ManageBooksPage from './pages/dashboard/ManageBooksPage';
 
 function App() {
   return (
@@ -15,9 +20,15 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/otp" element={<OtpPage />} />
-        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/new-password" element={<NewPassword />} />
+        <Route path="/" element={<RequireAuth redirectTo="/login"><DashboardLayout /></RequireAuth>}>
+          <Route index element={<DashboardHome />} />
+          <Route path="books" element={<BooksPage />} />
+          <Route path="my-issues" element={<MyIssuesPage />} />
+          <Route path="manage-books" element={<ManageBooksPage />} />
+        </Route>
+        <Route path="/dashboard" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );

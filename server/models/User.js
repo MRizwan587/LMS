@@ -25,6 +25,16 @@ const userSchema = new mongoose.Schema({
         unique: true,
         sparse: true,
     },
+    librarianId: {
+        type: String,
+        unique: true,
+        sparse: true,
+    },
+    authorId: {
+        type: String,
+        unique: true,
+        sparse: true,
+    },
     isActive: {
         type: Boolean,
         default: true

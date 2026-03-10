@@ -1,6 +1,6 @@
 import User from '../models/User.js';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import { signToken } from '../utils/jwt.js';
 import { sendEmail } from '../utils/email.js';
 
 export const signup = async (req, res) => {
@@ -62,7 +62,7 @@ export const login = async (req, res) => {
         if (!isPasswordCorrect) {
             return res.status(400).json({ message: 'Invalid password' });
         }
-        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+        const token = signToken(user._id, user.role);
         res.status(200).json({ user, token });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -94,7 +94,7 @@ export const verifyOtp = async (req, res) => {
       user.otp = undefined;
       user.otpExpires = undefined;
       await user.save();
-      const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+      const token = signToken(user._id, user.role);
       res.json({
         message: 'OTP verified successfully! Account is now active.',
         user: user,
@@ -140,6 +140,6 @@ export const resetPassword = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 12);
     user.password = hashedPassword;
     await user.save();
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
-    return res.status(200).json({ message: 'Password reset successfully', user: user ,token: token});
+    const token = signToken(user._id, user.role);
+    return res.status(200).json({ message: 'Password reset successfully', user: user, token: token });
 };

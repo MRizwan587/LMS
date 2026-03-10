@@ -1,11 +1,10 @@
 // src/services/authService.ts
-import axios, { AxiosError, type AxiosResponse as AxiosResponse } from 'axios';
-import type { LoginData as LoginDataType, SignupData as SignupDataType, AuthResponse as AuthResponseType, User as UserType } from '../types/auth';
-import { useNavigate } from 'react-router-dom';
+import axios, { AxiosError } from 'axios';
+import type { LoginData as LoginDataType, SignupData as SignupDataType, AuthResponse as AuthResponseType } from '../types/auth';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-const api = axios.create({
+export const api = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
@@ -13,13 +12,34 @@ const api = axios.create({
   withCredentials: false,
 });
 
+// Attach token to every request
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  config.headers.Authorization = token ? `Bearer ${token}` : '';
+  return config;
+});
+
+// On 401, clear auth and let caller handle redirect if needed
+api.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    if (err.response?.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    }
+    return Promise.reject(err);
+  }
+);
+
+function setAuthFromResponse(data: { token?: string; user?: unknown }) {
+  if (data.token) localStorage.setItem('token', data.token);
+  if (data.user) localStorage.setItem('user', JSON.stringify(data.user));
+}
 
 export const login = async (data: LoginDataType): Promise<AuthResponseType> => {
   try {
     const response = await api.post<AuthResponseType>('/auth/login', data);
-    const { token, user } = response.data;
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(user));
+    setAuthFromResponse(response.data);
     return response.data;
   } catch (error) {
     const err = error as AxiosError<{ message: string }>;
@@ -30,9 +50,9 @@ export const login = async (data: LoginDataType): Promise<AuthResponseType> => {
 export const signup = async (data: SignupDataType): Promise<AuthResponseType> => {
   try {
     const response = await api.post<AuthResponseType>('/auth/signup', data);
-    const { token, user } = response.data;
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(user));
+    if (response.data.token != null && response.data.user != null) {
+      setAuthFromResponse(response.data);
+    }
     return response.data;
   } catch (error) {
     const err = error as AxiosError<{ message: string }>;
@@ -41,15 +61,14 @@ export const signup = async (data: SignupDataType): Promise<AuthResponseType> =>
 };
 
 export const logout = () => {
-  const navigate = useNavigate();
   localStorage.removeItem('token');
   localStorage.removeItem('user');
-  navigate('/login');
 };
 
 export const verifyOtp = async (email: string, otp: string): Promise<AuthResponseType> => {
   try {
     const response = await api.post<AuthResponseType>('/auth/verify-otp', { email, otp });
+    setAuthFromResponse(response.data);
     return response.data;
   } catch (error) {
     const err = error as AxiosError<{ message: string }>;
@@ -70,9 +89,7 @@ export const regenerateOtp = async (email: string): Promise<AuthResponseType> =>
 export const resetPassword = async (email: string, password: string): Promise<AuthResponseType> => {
   try {
     const response = await api.post<AuthResponseType>('/auth/reset-password', { email, password });
-    const { token, user } = response.data;
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(user));
+    setAuthFromResponse(response.data);
     return response.data;
   } catch (error) {
     const err = error as AxiosError<{ message: string }>;

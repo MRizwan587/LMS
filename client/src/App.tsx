@@ -5,12 +5,13 @@ import OtpPage from './pages/Auth/otp';
 import { Toaster } from 'react-hot-toast';
 import ResetPassword from './pages/Auth/Resetpassword';
 import NewPassword from './pages/Auth/Newpassword';
-import { RequireAuth } from './components/auth/HasRole.tsx';
+import { RequireAuth, HasRoleRoute } from './components/auth/HasRole.tsx';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 import DashboardHome from './pages/dashboard/DashboardHome';
 import BooksPage from './pages/dashboard/BooksPage';
 import MyIssuesPage from './pages/dashboard/MyIssuesPage';
-import ManageBooksPage from './pages/dashboard/ManageBooksPage';
+import StudentsPage from './pages/dashboard/StudentsPage';
+import AssignedBooksPage from './pages/dashboard/AssignedBooksPage';
 
 function App() {
   return (
@@ -26,7 +27,8 @@ function App() {
           <Route index element={<DashboardHome />} />
           <Route path="books" element={<BooksPage />} />
           <Route path="my-issues" element={<MyIssuesPage />} />
-          <Route path="manage-books" element={<ManageBooksPage />} />
+          <Route path="students" element={<HasRoleRoute roles={['librarian']}><StudentsPage /></HasRoleRoute>} />
+          <Route path="assigned-books" element={<HasRoleRoute roles={['librarian']}><AssignedBooksPage /></HasRoleRoute>} />
         </Route>
         <Route path="/dashboard" element={<Navigate to="/" replace />} />
       </Routes>

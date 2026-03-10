@@ -1,5 +1,9 @@
 import { NavLink } from 'react-router-dom';
 import type { ReactNode } from 'react';
+import ListItemButton from '@mui/material/ListItemButton';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import Box from '@mui/material/Box';
 
 interface SidebarNavItemProps {
   to: string;
@@ -9,20 +13,38 @@ interface SidebarNavItemProps {
 
 export function SidebarNavItem({ to, icon, label }: SidebarNavItemProps) {
   return (
-    <NavLink
+    <ListItemButton
+      component={NavLink}
       to={to}
-      className={({ isActive }) =>
-        `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-          isActive
-            ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-50'
-            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-50'
-        }`
-      }
+      sx={{
+        borderRadius: 1,
+        py: 1.25,
+        px: 1.5,
+        '&.active': {
+          bgcolor: 'action.selected',
+          color: 'text.primary',
+          '& .MuiListItemIcon-root': {
+            color: 'text.secondary',
+          },
+        },
+        '&:not(.active)': {
+          color: 'text.secondary',
+          '& .MuiListItemIcon-root': {
+            color: 'text.secondary',
+          },
+          '&:hover': {
+            bgcolor: 'action.hover',
+            color: 'text.primary',
+          },
+        },
+      }}
     >
-      <span className="flex shrink-0 text-slate-500 dark:text-slate-400" aria-hidden>
-        {icon}
-      </span>
-      <span>{label}</span>
-    </NavLink>
+      <ListItemIcon sx={{ minWidth: 40, color: 'inherit' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', color: 'inherit' }} aria-hidden>
+          {icon}
+        </Box>
+      </ListItemIcon>
+      <ListItemText primary={label} primaryTypographyProps={{ variant: 'body2', fontWeight: 500 }} />
+    </ListItemButton>
   );
 }

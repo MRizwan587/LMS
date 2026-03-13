@@ -4,6 +4,21 @@ import type { BorrowRecord } from '../types/borrow';
 
 const API_URL = import.meta.env.VITE_API_URL ?? '';
 
+export async function getOverdueBorrows(): Promise<BorrowRecord[]> {
+  const { data } = await api.get('/books/overdue');
+  return data;
+}
+
+export async function getCounts(): Promise<{ issued: number; pendingReturn: number; totalBorrowed: number; overdue: number }> {
+  const { data } = await api.get('/books/counts');
+  return data;
+}
+
+export async function searchByTitle(title: string): Promise<Book[]> {
+  const { data } = await api.get<Book[]>(`/books/search?title=${title}`);
+  return data;
+}
+
 /** Build full URL for an upload path stored in DB (e.g. thumbnails/xxx.jpg) */
 export function getUploadUrl(relativePath: string | null | undefined): string {
   if (!relativePath) return '';
@@ -47,7 +62,7 @@ export async function getMyBorrows(): Promise<BorrowRecord[]> {
   return data;
 }
 
-export async function returnBook(bookId: string): Promise<Book> {
-  const { data } = await api.post<Book>(`/books/${bookId}/return`);
+export async function returnBook(bookId: string, studentId: string): Promise<Book> {
+  const { data } = await api.post<Book>(`/books/${bookId}/return`, { studentId });
   return data;
 }

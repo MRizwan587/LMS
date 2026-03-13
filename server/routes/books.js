@@ -2,13 +2,16 @@
 import express from 'express';
 import { protect } from '../middleware/auth.js';
 import { uploadBookFiles } from '../middleware/upload.js';
-import { getBorrows, getMyBorrows, getAll, getOne, create, update, remove, borrow, returnBook } from '../controllers/bookController.js';
+import { getBorrows, getMyBorrows, getAll, getOne, create, update, remove, borrow, returnBook, getOverdueBooks, getCounts, searchByTitle } from '../controllers/bookController.js';
 
 const router = express.Router();
 router.use(protect);  // all book routes require login
 
 router.get('/borrows/list', getBorrows);
 router.get('/borrows/my', getMyBorrows);
+router.get('/overdue', getOverdueBooks);
+router.get('/search', searchByTitle);
+router.get('/counts', getCounts);
 router.get('/', getAll);
 router.get('/:id', getOne);
 router.post('/create', (req, res, next) => {

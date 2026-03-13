@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react';
 import { PageContainer } from '../../components/layout/PageContainer';
 import ReusableDataGrid from '../../components/ui/ReusableDataGrid';
 import { HasRole } from '../../components/auth/HasRole';
-import { getBooks, createBook, updateBook, borrowBook } from '../../services/booksService';
+import { getBooks, createBook, updateBook, searchByTitle } from '../../services/booksService';
 import type { Book } from '../../types/book';
 import type { GridColDef } from '@mui/x-data-grid';
-import { Button, Typography, Chip, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Stack, FormControlLabel, Checkbox, Box, IconButton, Menu, MenuItem } from '@mui/material';
+import { Button, Typography, Chip, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Stack, FormControlLabel, Checkbox, Box, IconButton, Menu, MenuItem, InputAdornment } from '@mui/material';
 import toast from 'react-hot-toast';
 import { getUploadUrl } from '../../services/booksService';
 import { PdfViewerDialog } from '../../components/pdf/PdfViewerDialog';
@@ -54,6 +54,7 @@ const initialForm = {
   description: '',
   genre: '',
   publishedYear: '',
+  copies: '1',
   downloadable: false,
   thumbnail: null as File | null,
   pdf: null as File | null,
@@ -67,6 +68,15 @@ function MoreVertIcon() {
   );
 }
 
+function SearchIcon() {
+  return (
+    <Box component="svg" width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} sx={{ display: 'block' }}>
+      <circle cx="11" cy="11" r="8" />
+      <path d="m21 21-4.35-4.35" />
+    </Box>
+  );
+}
+
 export default function BooksPage() {
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,14 +84,13 @@ export default function BooksPage() {
   const [form, setForm] = useState(initialForm);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [borrowingId, setBorrowingId] = useState<string | null>(null);
   const [pdfViewerUrl, setPdfViewerUrl] = useState<string | null>(null);
   const [menuAnchor, setMenuAnchor] = useState<{ el: HTMLElement; bookId: string } | null>(null);
   const [editingBookId, setEditingBookId] = useState<string | null>(null);
   const user = getStoredUser();
-  const isStudent = user?.role === 'student';
   const isAuthorOrLibrarian = user?.role === 'author' || user?.role === 'librarian';
-
+  const isStudent = user?.role === 'student';
+  const [searchTitle, setSearchTitle] = useState('');
   const openPdfViewer = (url: string) => setPdfViewerUrl(url);
   const closePdfViewer = () => setPdfViewerUrl(null);
 
@@ -104,6 +113,11 @@ export default function BooksPage() {
     setDialogOpen(true);
   };
 
+  const handleSearch = () => {
+    setLoading(true);
+    searchByTitle(searchTitle).then(setBooks).catch(() => setBooks([])).finally(() => setLoading(false));
+  };
+
   const handleOpenEditDialog = (book: Book) => {
     setEditingBookId(book._id);
     setForm({
@@ -111,6 +125,7 @@ export default function BooksPage() {
       description: book.description ?? '',
       genre: book.genre ?? '',
       publishedYear: book.publishedYear ? String(book.publishedYear) : '',
+      copies: book.copies != null ? String(book.copies) : '1',
       downloadable: book.downloadable ?? false,
       thumbnail: null,
       pdf: null,
@@ -139,19 +154,6 @@ export default function BooksPage() {
     setError(null);
   };
 
-  const handleBorrow = (bookId: string) => {
-    setBorrowingId(bookId);
-    borrowBook(bookId)
-      .then(() => {
-        toast.success('Book borrowed successfully');
-        loadBooks();
-      })
-      .catch((err: { response?: { data?: { message?: string } }; message?: string }) => {
-        toast.error(err.response?.data?.message ?? err.message ?? 'Failed to borrow book');
-      })
-      .finally(() => setBorrowingId(null));
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const title = form.title.trim();
@@ -166,6 +168,8 @@ export default function BooksPage() {
     if (form.description.trim()) fd.append('description', form.description.trim());
     if (form.genre.trim()) fd.append('genre', form.genre.trim());
     if (form.publishedYear) fd.append('publishedYear', form.publishedYear);
+    const copiesNum = form.copies.trim() ? parseInt(form.copies, 10) : 1;
+    fd.append('copies', String(isNaN(copiesNum) || copiesNum < 1 ? 1 : copiesNum));
     fd.append('downloadable', String(form.downloadable));
     if (form.thumbnail) fd.append('thumbnail', form.thumbnail);
     if (form.pdf) fd.append('pdf', form.pdf);
@@ -199,8 +203,9 @@ export default function BooksPage() {
     },
     { field: 'createdByName', headerName: 'Created by', flex: 1, minWidth: 140 },
     { field: 'genre', headerName: 'Genre', width: 120 },
-    {
-      field: 'borrowedByName',
+    ...(isAuthorOrLibrarian ? [{ field: 'copiesInfo', headerName: 'Copies', width: 100 }] as GridColDef[] : []),
+    ...(isStudent ? [{ field: 'status', headerName: 'Status', width: 100 }] as GridColDef[] : []),
+    { field: 'borrowedByName',
       headerName: 'Borrowed by',
       flex: 1,
       renderCell: ({ value }) => (
@@ -214,14 +219,15 @@ export default function BooksPage() {
     {
       field: 'pdf',
       headerName: 'PDF',
-      flex: 1,
+      width: 200,
       sortable: false,
       renderCell: ({ row }: { row: { pdf?: string | null; downloadable?: boolean } }) => {
         if (!row.pdf) return '—';
         const pdfUrl = getUploadUrl(row.pdf);
         return (
-          <Stack direction="row" alignItems="center"  spacing={1}>
-            <Button
+          <Box sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center' }}>
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Button
               size="small"
               variant="outlined"
               onClick={(e) => {
@@ -245,32 +251,11 @@ export default function BooksPage() {
                 Download
               </Button>
             )}
-          </Stack>
+            </Stack>
+          </Box>
         );
       },
     },
-    ...(isStudent
-      ? [
-          {
-            field: 'action',
-            headerName: 'Action',
-            flex: 1,
-            sortable: false,
-            renderCell: ({ row }: { row: { id: string; isAvailable: boolean; pdf?: string | null } }) =>
-              row.pdf ? null : (
-                <Button
-                  variant="contained"
-                  size="small"
-                  color="primary"
-                  disabled={!row.isAvailable || borrowingId === row.id}
-                  onClick={() => handleBorrow(row.id)}
-                >
-                  {borrowingId === row.id ? 'Borrowing…' : 'Borrow'}
-                </Button>
-              ),
-          } as GridColDef,
-        ]
-      : []),
     ...(isAuthorOrLibrarian
       ? [
           {
@@ -302,7 +287,11 @@ export default function BooksPage() {
     coverImage: b.coverImage ?? null,
     createdByName: b.createdBy?.name ?? '—',
     genre: b.genre ?? '—',
-    borrowedByName: b.borrowedBy?.name ?? 'Available',
+    copiesInfo: b.pdf ? 'Digital' : (b.countborrowed != null ? `${b.countborrowed}/${b.copies ?? 1} out` : `${b.copies ?? 1}`),
+    status: b.status,
+    borrowedByName: Array.isArray(b.borrowedBy) && b.borrowedBy.length
+      ? b.borrowedBy.map((u) => u.name).join(', ')
+      : 'Available',
     isAvailable: b.status === 'available',
     pdf: b.pdf ?? null,
     downloadable: b.downloadable ?? false,
@@ -316,10 +305,35 @@ export default function BooksPage() {
     </HasRole>
   );
 
+  const searchBar = (
+    <TextField
+      placeholder="Search by title…"
+      size="small"
+      value={searchTitle}
+      onChange={(e) => setSearchTitle(e.target.value)}
+      onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
+      fullWidth
+      sx={{ maxWidth: 400, '& .MuiOutlinedInput-root': { bgcolor: 'background.paper' } }}
+      InputProps={{
+        startAdornment: (
+          <InputAdornment position="start">
+            <IconButton
+              size="small"
+              onClick={handleSearch}
+              aria-label="Search"
+              sx={{ p: 0.5 }}
+            >
+              <SearchIcon />
+            </IconButton>
+          </InputAdornment>
+        ),
+      }}
+    />
+  );
+
   return (
     <>
-      <PageContainer title="Books" action={addBookAction}>
-
+      <PageContainer title="Books" middle={searchBar} action={addBookAction}>
         {loading ? (
           <Typography variant="body1" color="text.secondary">Loading books…</Typography>
         ) : (
@@ -362,21 +376,22 @@ export default function BooksPage() {
               <TextField label="Title" required value={form.title} onChange={handleChange('title')} fullWidth autoFocus />
               <TextField label="Description" value={form.description} onChange={handleChange('description')} fullWidth multiline rows={2}/>
               <TextField label="Genre" value={form.genre} onChange={handleChange('genre')} fullWidth/>
-              <TextField label="Published year" type="number" value={form.publishedYear} onChange={handleChange('publishedYear')} fullWidth inputProps={{ min: 1, max: new Date().getFullYear() }} />
-              <FormControlLabel
-                control={<Checkbox checked={form.downloadable} onChange={handleChange('downloadable')} />}
-                label="Downloadable (students can download PDF)"
-              />
+              <TextField label="Published year of book" type="number" value={form.publishedYear} onChange={handleChange('publishedYear')} fullWidth inputProps={{ min: 1, max: new Date().getFullYear() }} />
+              <TextField label="Copies" type="number" value={form.copies} onChange={handleChange('copies')} fullWidth inputProps={{ min: 1 }} helperText="Number of physical copies available for borrowing" />
               <Typography variant="body2" color="text.secondary">Thumbnail (image)</Typography>
               <Button variant="outlined" component="label" fullWidth>
                 {form.thumbnail ? form.thumbnail.name : 'Choose thumbnail'}
                 <input type="file" accept="image/*" hidden onChange={handleChange('thumbnail')} />
               </Button>
-              <Typography variant="body2" color="text.secondary">PDF</Typography>
+              <Typography variant="body2" color="text.secondary">PDF if digital book (optional)</Typography>
               <Button variant="outlined" component="label" fullWidth>
                 {form.pdf ? form.pdf.name : 'Choose PDF'}
                 <input type="file" accept="application/pdf" hidden onChange={handleChange('pdf')} />
               </Button>
+              <FormControlLabel
+                control={<Checkbox checked={form.downloadable} onChange={handleChange('downloadable')} />}
+                label="Downloadable (students can download PDF)"
+              />
             </Stack>
           </DialogContent>
           <DialogActions>

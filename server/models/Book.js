@@ -14,6 +14,14 @@ const bookSchema = new mongoose.Schema({
   pdf: {
     type: String,
   },
+  copies:{
+    type: Number,
+    default: 1,
+  },
+  countborrowed:{
+    type: Number,
+    default: 0,
+  },
   downloadable: {
     type: Boolean,
     default: false,
@@ -35,9 +43,8 @@ const bookSchema = new mongoose.Schema({
     default: 'available',
   },
   borrowedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'users',
-    default: null,
+    type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'users' }],
+    default: [],
   },
   isActive: {
     type: Boolean,

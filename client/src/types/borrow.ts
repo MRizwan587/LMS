@@ -1,6 +1,7 @@
 export interface BorrowBookRef {
   _id: string;
   title: string;
+  coverImage?: string;
 }
 
 export interface BorrowStudentRef {
@@ -18,6 +19,7 @@ export interface BorrowRecord {
   dueDate: string;
   returnDate: string | null;
   status: 'borrowed' | 'returned' | 'overdue';
+  fine?: number;
   createdAt?: string;
   updatedAt?: string;
 }

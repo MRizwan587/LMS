@@ -12,6 +12,7 @@ import BooksPage from './pages/dashboard/BooksPage';
 import MyIssuesPage from './pages/dashboard/MyIssuesPage';
 import StudentsPage from './pages/dashboard/StudentsPage';
 import AssignedBooksPage from './pages/dashboard/AssignedBooksPage';
+import OverduePage from './pages/dashboard/OverduePage.tsx';
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
           <Route path="my-issues" element={<MyIssuesPage />} />
           <Route path="students" element={<HasRoleRoute roles={['librarian']}><StudentsPage /></HasRoleRoute>} />
           <Route path="assigned-books" element={<HasRoleRoute roles={['librarian']}><AssignedBooksPage /></HasRoleRoute>} />
+          <Route path="overdue" element={<HasRoleRoute roles={['librarian']}><OverduePage /></HasRoleRoute>} />
         </Route>
         <Route path="/dashboard" element={<Navigate to="/" replace />} />
       </Routes>

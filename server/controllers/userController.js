@@ -1,12 +1,27 @@
 import User from '../models/User.js';
 
-// GET /users/students — list all students (librarian only)
+// Escape special regex characters in a string for safe use in RegExp
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// GET /users/students — list all students (librarian only). Optional ?search= for name/rollNumber regex filter
 export const getStudents = async (req, res) => {
   try {
     if (req.user.role !== 'librarian') {
       return res.status(403).json({ message: 'Only librarians can view the students list' });
     }
-    const students = await User.find({ role: 'student' })
+    const query = { role: 'student' };
+    const search = typeof req.query.search === 'string' ? req.query.search.trim() : '';
+    if (search) {
+      const pattern = escapeRegex(search);
+      const regex = new RegExp(pattern, 'i');
+      query.$or = [
+        { name: { $regex: regex } },
+        { rollNumber: { $regex: regex } },
+      ];
+    }
+    const students = await User.find(query)
       .select('name email rollNumber role isActive createdAt')
       .sort({ createdAt: -1 })
       .lean();

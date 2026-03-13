@@ -4,11 +4,13 @@ import Typography from '@mui/material/Typography';
 
 interface PageContainerProps {
   title?: string;
+  /** Rendered between title and action (e.g. search bar). */
+  middle?: ReactNode;
   action?: ReactNode;
   children: ReactNode;
 }
 
-export function PageContainer({ title, action, children }: PageContainerProps) {
+export function PageContainer({ title, middle, action, children }: PageContainerProps) {
   return (
     <Box
       sx={{
@@ -20,7 +22,7 @@ export function PageContainer({ title, action, children }: PageContainerProps) {
       }}
     >
       <Box sx={{ p: 3 }}>
-        {(title || action) && (
+        {(title || middle || action) && (
           <Box
             sx={{
               mb: 3,
@@ -36,7 +38,12 @@ export function PageContainer({ title, action, children }: PageContainerProps) {
                 {title}
               </Typography>
             )}
-            {action && <Box sx={{ ml: 'auto' }}>{action}</Box>}
+            {middle && (
+              <Box sx={{ flex: 1, minWidth: 0, display: 'flex', justifyContent: 'center', px: 2 }}>
+                {middle}
+              </Box>
+            )}
+            {action && <Box sx={{ flexShrink: 0 }}>{action}</Box>}
           </Box>
         )}
         {children}

@@ -1,13 +1,22 @@
 import { useCallback, useEffect, useState } from 'react';
 import { PageContainer } from '../../components/layout/PageContainer';
 import ReusableDataGrid from '../../components/ui/ReusableDataGrid';
-import { getStudents, updateStudentStatus, updateStudent } from '../../services/studentsService';
+import { searchStudents, updateStudentStatus, updateStudent } from '../../services/studentsService';
 import type { StudentRow } from '../../types/student';
 import type { UpdateStudentPayload } from '../../services/studentsService';
 import { getBooks, borrowBook } from '../../services/booksService';
 import type { Book } from '../../types/book';
 import type { GridColDef } from '@mui/x-data-grid';
-import { IconButton, Menu, MenuItem, Switch, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Stack, Typography } from '@mui/material';
+import { IconButton, Menu, MenuItem, Switch, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Stack, Typography, Box, InputAdornment } from '@mui/material';
+
+function SearchIcon() {
+  return (
+    <Box component="svg" width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} sx={{ display: 'block' }}>
+      <circle cx="11" cy="11" r="8" />
+      <path d="m21 21-4.35-4.35" />
+    </Box>
+  );
+}
 
 const MoreVertIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -16,6 +25,7 @@ const MoreVertIcon = () => (
 );
 
 const initialForm = { name: '', email: '', rollNumber: '' };
+const SEARCH_DEBOUNCE_MS = 300;
 
 export default function StudentsPage() {
   const [students, setStudents] = useState<StudentRow[]>([]);
@@ -30,18 +40,21 @@ export default function StudentsPage() {
   const [error, setError] = useState<string | null>(null);
   const [availableBooks, setAvailableBooks] = useState<Book[]>([]);
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
+  const [assignBookSearch, setAssignBookSearch] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const loadStudents = useCallback(() => {
+  const runSearch = useCallback((term: string) => {
     setLoading(true);
-    getStudents()
+    searchStudents(term)
       .then(setStudents)
       .catch(() => setStudents([]))
       .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
-    loadStudents();
-  }, []);
+    const t = setTimeout(() => runSearch(searchQuery), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(t);
+  }, [searchQuery, runSearch]);
 
   const handleStatusChange = (studentId: string, isActive: boolean) => {
     updateStudentStatus(studentId, isActive)
@@ -71,9 +84,10 @@ export default function StudentsPage() {
   const openAssign = (row: StudentRow) => {
     setSelectedStudent(row);
     setSelectedBookId(null);
+    setAssignBookSearch('');
     setError(null);
     getBooks()
-      .then((books) => setAvailableBooks(books.filter((b) => b.status === 'available')))
+      .then((books) => setAvailableBooks(books.filter((b) => b.status === 'available' && !b.pdf)))
       .catch(() => setAvailableBooks([]));
     setAssignOpen(true);
   };
@@ -117,7 +131,7 @@ export default function StudentsPage() {
     borrowBook(selectedBookId, selectedStudent._id)
       .then(() => {
         setAssignOpen(false);
-        loadStudents();
+        runSearch(searchQuery);
       })
       .catch((err: { response?: { data?: { message?: string } }; message?: string }) => {
         setError(err.response?.data?.message ?? err.message ?? 'Assign failed');
@@ -220,16 +234,39 @@ export default function StudentsPage() {
     isActive: s.isActive ?? true,
   }));
 
+  const searchBar = (
+    <TextField
+      placeholder="Search by name or roll number…"
+      size="small"
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') runSearch(searchQuery);
+      }}
+      fullWidth
+      sx={{ maxWidth: 400, '& .MuiOutlinedInput-root': { bgcolor: 'background.paper' } }}
+      InputProps={{
+        startAdornment: (
+          <InputAdornment position="start">
+            <IconButton size="small" aria-label="Search" sx={{ p: 0.5 }} onClick={() => runSearch(searchQuery)}>
+              <SearchIcon />
+            </IconButton>
+          </InputAdornment>
+        ),
+      }}
+    />
+  );
+
   return (
     <>
-      <PageContainer title="Students">
+      <PageContainer title="Students" middle={searchBar}>
         {loading ? (
           <p className="text-slate-600 dark:text-slate-400">Loading students…</p>
         ) : (
           <ReusableDataGrid
             columns={columns}
             rows={rows}
-            emptyMessage="No students found"
+            emptyMessage={searchQuery.trim() ? 'No students match your search' : 'No students found'}
             height={'89vh'}
           />
         )}
@@ -309,10 +346,23 @@ export default function StudentsPage() {
               <Typography color="text.secondary">No available books.</Typography>
             ) : (
               <Stack spacing={1}>
+                <TextField
+                  size="small"
+                  placeholder="Search by title…"
+                  value={assignBookSearch}
+                  onChange={(e) => setAssignBookSearch(e.target.value)}
+                  fullWidth
+                />
                 <Typography variant="body2" color="text.secondary">
                   Select a book to assign:
                 </Typography>
-                {availableBooks.map((book) => (
+                {availableBooks
+                  .filter(
+                    (book) =>
+                      !assignBookSearch.trim() ||
+                      book.title.toLowerCase().includes(assignBookSearch.trim().toLowerCase())
+                  )
+                  .map((book) => (
                   <Button
                     key={book._id}
                     variant={selectedBookId === book._id ? 'contained' : 'outlined'}
@@ -322,8 +372,19 @@ export default function StudentsPage() {
                   >
                     {book.title}
                     {book.genre ? ` · ${book.genre}` : ''}
+                    {book.countborrowed != null ? ` · ${book.countborrowed}/${book.copies ?? 1} out` : ` · ${book.copies ?? 1}`}
                   </Button>
                 ))}
+                {availableBooks.filter(
+                  (b) =>
+                    !assignBookSearch.trim() ||
+                    b.title.toLowerCase().includes(assignBookSearch.trim().toLowerCase())
+                ).length === 0 &&
+                  assignBookSearch.trim() && (
+                    <Typography color="text.secondary" variant="body2">
+                      No books match &quot;{assignBookSearch.trim()}&quot;
+                    </Typography>
+                  )}
               </Stack>
             )}
           </Stack>

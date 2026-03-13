@@ -8,6 +8,8 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Grid';
 import Alert from '@mui/material/Alert';
+import { useEffect, useState } from 'react';
+import { getCounts } from '../../services/booksService.ts';
 
 const issuedBooksColumns: GridColDef[] = [
   { field: 'title', headerName: 'Book title', flex: 1, minWidth: 180 },
@@ -50,7 +52,29 @@ const IconClock = () => (
 
 export default function DashboardHome() {
   const user = getStoredUser();
-
+  const [counts, setCounts] = useState({
+    issued: 0,
+    pendingReturn: 0,
+    totalBorrowed: 0,
+    overdue: 0,
+  });
+  useEffect(() => {
+    getCounts().then((counts) => {
+      setCounts({
+        issued: counts.issued,
+        pendingReturn: counts.pendingReturn,
+        totalBorrowed: counts.totalBorrowed,
+        overdue: counts.overdue,
+      });
+    }).catch(() => {
+      setCounts({
+        issued: 0,
+        pendingReturn: 0,
+        totalBorrowed: 0,
+        overdue: 0,
+      });
+    });
+  }, []);
   return (
     <PageContainer title={`Welcome, ${user?.name ?? 'User'}`}>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
@@ -62,23 +86,21 @@ export default function DashboardHome() {
       </Typography>
 
       <Grid container spacing={2} sx={{ mb: 4 }}>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-          <StatCard title="Issued books" value="10" icon={<IconBook />} subtitle="Currently with you" />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-          <StatCard title="Pending returns" value="5" icon={<IconClock />} subtitle="Due soon" />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-          <StatCard title="Total read" value="3" icon={<IconBook />} subtitle="Total read" />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-          <StatCard title="Overdue" value="2" icon={<IconClock />} subtitle="Due soon" />
-        </Grid>
+        <HasRole roles={['librarian', 'student']}>  <StatCard title="Total Issued books" value={counts.issued} icon={<IconBook />} subtitle="Total Issued books" /> 
+        <StatCard title="Pending returns" value={counts.pendingReturn} icon={<IconClock />} subtitle="Pending return books" /> 
+        <StatCard title="Current borrowed" value={counts.totalBorrowed} icon={<IconBook />} subtitle="Currently borrowed books" /> 
+        <StatCard title="Over-Due return Books" value={counts.overdue} icon={<IconClock />} subtitle="Overdue books" /> </HasRole>
+        <HasRole roles={['author']}>  <StatCard title="Total Issued books" value={counts.issued} icon={<IconBook />} subtitle="Total Issued books" /> </HasRole>
       </Grid>
 
-      <HasRole roles={['librarian', 'author']}>
+      <HasRole roles={['librarian']}>
         <Alert severity="info" sx={{ mb: 2 }}>
-          You are a librarian or author. you can manage books.
+          You are a librarian. you can manage books and students.
+        </Alert>
+      </HasRole>
+      <HasRole roles={['author']}>
+        <Alert severity="info" sx={{ mb: 2 }}>
+          You are author. you can add and manage your books.
         </Alert>
       </HasRole>
       <HasRole roles={['student']}>
@@ -87,7 +109,7 @@ export default function DashboardHome() {
         </Alert>
       </HasRole>
 
-      <HasRole roles={['student']}>
+      <HasRole roles={[]}>
         <Box component="section" sx={{ mt: 4 }}>
           <Typography variant="h6" component="h2" fontWeight={600} color="text.primary" sx={{ mb: 2 }}>
             Issued books

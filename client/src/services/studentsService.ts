@@ -6,6 +6,13 @@ export async function getStudents(): Promise<StudentRow[]> {
   return data;
 }
 
+/** Search students by name or rollNumber (regex on API). Pass empty string to get all. */
+export async function searchStudents(search: string): Promise<StudentRow[]> {
+  const params = search.trim() ? { search: search.trim() } : {};
+  const { data } = await api.get<StudentRow[]>('/users/students', { params });
+  return data;
+}
+
 export async function updateStudentStatus(studentId: string, isActive: boolean): Promise<StudentRow> {
   const { data } = await api.patch<StudentRow>(`/users/students/${studentId}/status`, { isActive });
   return data;

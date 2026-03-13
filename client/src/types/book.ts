@@ -17,12 +17,14 @@ export interface Book {
   description?: string;
   genre?: string;
   publishedYear?: number;
+  copies?: number;
   coverImage?: string | null;
   pdf?: string | null;
   downloadable?: boolean;
   createdBy: BookCreatedBy;
   status: 'available' | 'borrowed';
-  borrowedBy?: BookBorrowedBy | null;
+  borrowedBy?: BookBorrowedBy[] | null;
+  countborrowed?: number;
   isActive?: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -33,5 +35,6 @@ export interface CreateBookPayload {
   description?: string;
   genre?: string;
   publishedYear?: number;
+  copies?: number;
   downloadable?: boolean;
 }

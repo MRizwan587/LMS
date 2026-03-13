@@ -37,3 +37,6 @@ Thumbs.db
 
 # MongoDB dump (if any)
 dump/
+
+#upload folder in server
+server/uploads/

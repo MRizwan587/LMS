@@ -3,6 +3,10 @@ import { SidebarNavItem } from './SidebarNavItem';
 import { logout } from '../../services/authService';
 import { useNavigate } from 'react-router-dom';
 import type { User } from '../../types/auth';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import List from '@mui/material/List';
 
 function getStoredUser(): User | null {
   try {
@@ -27,37 +31,82 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="flex w-64 flex-col border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
-      <div className="flex h-14 items-center gap-2 border-b border-slate-200 px-4 dark:border-slate-800">
-        <span className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+    <Box
+      component="aside"
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        width: 256,
+        borderRight: 1,
+        borderColor: 'divider',
+        bgcolor: 'background.paper',
+      }}
+    >
+      <Box
+        sx={{
+          display: 'flex',
+          height: 56,
+          alignItems: 'center',
+          gap: 1,
+          borderBottom: 1,
+          borderColor: 'divider',
+          px: 2,
+        }}
+      >
+        <Typography variant="h6" component="span" color="text.primary">
           Library
-        </span>
-      </div>
-      <nav className="flex-1 space-y-1 p-3">
-        {visibleItems.map((item) => (
-          <SidebarNavItem
-            key={item.path}
-            to={item.path}
-            icon={item.icon}
-            label={item.label}
-          />
-        ))}
-      </nav>
-      <div className="border-t border-slate-200 p-3 dark:border-slate-800">
-        <div className="rounded-lg px-3 py-2 text-sm text-slate-600 dark:text-slate-400">
-          <p className="font-medium text-slate-900 dark:text-slate-100 truncate">
+        </Typography>
+      </Box>
+      <Box component="nav" sx={{ flex: 1, py: 1.5, px: 1.5 }}>
+        <List disablePadding sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+          {visibleItems.map((item) => (
+            <SidebarNavItem
+              key={item.path}
+              to={item.path}
+              icon={item.icon}
+              label={item.label}
+            />
+          ))}
+        </List>
+      </Box>
+      <Box
+        sx={{
+          borderTop: 1,
+          borderColor: 'divider',
+          p: 1.5,
+        }}
+      >
+        <Box
+          sx={{
+            borderRadius: 1,
+            px: 1.5,
+            py: 1,
+          }}
+        >
+          <Typography variant="body2" fontWeight={500} color="text.primary" noWrap>
             {user?.name ?? 'User'}
-          </p>
-          <p className="text-xs capitalize">{user?.role ?? '—'}</p>
-        </div>
-        <button
-          type="button"
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'capitalize' }}>
+            {user?.role ?? '—'}
+          </Typography>
+        </Box>
+        <Button
+          fullWidth
           onClick={handleLogout}
-          className="mt-2 w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-50"
+          sx={{
+            mt: 1,
+            justifyContent: 'flex-start',
+            textTransform: 'none',
+            color: 'text.secondary',
+            '&:hover': {
+              bgcolor: 'action.hover',
+              color: 'text.primary',
+            },
+          }}
         >
           Logout
-        </button>
-      </div>
-    </aside>
+        </Button>
+      </Box>
+    </Box>
   );
 }

@@ -284,7 +284,7 @@ export const returnBook = async (req, res) => {
 //due date < date now return the list of books that are overdue
 export const getOverdueBooks = async (req, res) => {
   try {
-    const overdueBooks = await Borrow.find({ dueDate: { $lt: new Date() } })
+    const overdueBooks = await Borrow.find({ dueDate: { $lt: new Date() }, status: 'borrowed',  })
       .populate('book', 'title coverImage')
       .populate('student', 'name email rollNumber');
     const finePerDay = process.env.FINE_PER_DAY;
